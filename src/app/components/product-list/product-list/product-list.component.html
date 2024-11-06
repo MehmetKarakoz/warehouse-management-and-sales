@@ -1,0 +1,367 @@
+<div class="flex h-screen w-screen bg-gray-50 overflow-hidden p-4">
+  <div class="w-3/5 flex flex-col h-full pr-4">
+    <div class="bg-white rounded-lg shadow-sm h-full flex flex-col">
+      <div class="p-4 border-b">
+        <div class="flex items-center justify-between mb-4">
+          <h1 class="text-2xl font-bold text-gray-800">Depo Yönetimi</h1>
+          <div class="flex items-center space-x-2">
+            <p-button severity="success" label="Yeni Ekle" icon="pi pi-plus" class="mr-2" (onClick)="openNew()" />
+            <p-button severity="danger" label="Sil" icon="pi pi-trash" (onClick)="deleteSelectedProducts()"
+              [disabled]="!selectedProducts || !selectedProducts.length" />
+          </div>
+        </div>
+        <div class="flex items-center space-x-4">
+          <i class="pi pi-search"></i>
+          <span class="p-input-icon-left flex-1">
+
+            <input pInputText type="text" placeholder="Ara..." class="w-full p-3 rounded-lg" />
+
+          </span>
+
+          <p-button severity="help" label="Dışa Aktar" icon="pi pi-upload" (onClick)="dt.exportCSV()" [outlined]="true" />
+        </div>
+      </div>
+
+      <div class="flex-1 overflow-hidden h-screen p-2">
+        <p-table #dt [value]="products" [rows]="8" [paginator]="true"
+            [columns]="cols" exportFilename="products" [tableStyle]="{ 'min-width': '100%' }"
+          [(selection)]="selectedProducts" [rowHover]="true" dataKey="id" [scrollable]="true"
+          scrollHeight="calc(100vh - 210px) " styleClass="p-datatable-gridlines">
+
+          <ng-template pTemplate="header">
+            <tr>
+              <th style="width: 4rem " class="bg-slate-300">
+                <p-tableHeaderCheckbox />
+              </th>
+              <th pSortableColumn="name" style="min-width:200px">
+                Ürün Adı <p-sortIcon field="name" />
+              </th>
+              <th pSortableColumn="price" style="min-width:150px">
+                Fiyat <p-sortIcon field="price" />
+              </th>
+              <th pSortableColumn="category" style="min-width:150px">
+                Kategori <p-sortIcon field="category" />
+              </th>
+              <th pSortableColumn="inventoryStatus" style="min-width:150px">
+                Durum <p-sortIcon field="inventoryStatus" />
+              </th>
+              <th style="width:130px">İşlemler</th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-product class="h-full">
+            <tr class="mt-4">
+              <td class="bg-slate-300 ">
+                <p-tableCheckbox [value]="product" />
+              </td>
+              <td>{{ product.name }}</td>
+              <td>{{ product.price | currency:'':'₺' }}</td>
+              <td>{{ product.category }}</td>
+              <td>
+                <p-tag [value]="product.inventoryStatus" [severity]="getSeverity(product.inventoryStatus)" />
+              </td>
+              <td>
+                <div class="flex gap-2">
+                  <p-button icon="pi pi-pencil" [rounded]="true" [outlined]="true" severity="success"
+                    (onClick)="editProduct(product)" />
+                  <p-button icon="pi pi-trash" [rounded]="true" [outlined]="true" severity="danger"
+                    (onClick)="deleteProduct(product)" />
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </div>
+  </div>
+
+  <div class="w-2/5 flex flex-col h-full space-y-4">
+    <div class="bg-white rounded-lg shadow-sm h-full p-6 flex flex-col">
+      <h2 class="text-xl font-semibold text-gray-800 mb-4">Kasa - Satış - Satış Listesi</h2>
+      <div class="flex space-x-4 h-full">
+        <!-- Satış Listesi -->
+        <div class="bg-slate-50 w-1/2 p-4 rounded-lg flex flex-col h-[calc(100vh-30rem)]">
+          <h3 class="font-medium mb-4">Satış Listesi</h3>
+          <div class="space-y-3 overflow-y-auto flex-1 pr-2 custom-scrollbar">
+            @for (sale of sales; track sale.id) {
+              <div class="bg-white p-3 rounded-lg shadow-sm">
+                <div class="flex justify-between items-start">
+                  <div class="flex-1">
+                    <div class="font-medium">{{sale.productName}}</div>
+                    <div class="text-sm text-gray-600">
+                      Fiyat: {{sale.price | currency:'TRY':'symbol-narrow':'1.2-2'}}
+                    </div>
+                    <div class="text-xs text-gray-500">
+                      {{sale.date}} - {{sale.time}}
+                    </div>
+                  </div>
+                  <div class="flex space-x-2 ml-2">
+                    <button 
+                      (click)="openEditModal(sale)"
+                      class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Düzenle"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                    <button 
+                      (click)="confirmDelete(sale)"
+                      class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Sil"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Satış Formu -->
+        <div class="bg-slate-50 w-1/2 p-4 rounded-lg">
+          <form [formGroup]="salesForm" (ngSubmit)="onSubmit()">
+            <div class="mb-4">
+              <label for="productName" class="block font-medium mb-2">Satılan Ürün - Ürün Kodu</label>
+              <input 
+                type="text" 
+                id="productName" 
+                formControlName="productName"
+                class="w-full p-2 border rounded-lg"
+                [ngClass]="{'border-red-500': isFieldInvalid('productName')}"
+              >
+              @if (isFieldInvalid('productName')) {
+                <small class="text-red-500">
+                  Ürün adı gereklidir.
+                </small>
+              }
+            </div>
+
+            <div class="mb-4">
+              <label for="price" class="block font-medium mb-2">Ürün Fiyatı</label>
+              <input 
+                type="number" 
+                id="price" 
+                formControlName="price"
+                class="w-full p-2 border rounded-lg"
+                [ngClass]="{'border-red-500': isFieldInvalid('price')}"
+              >
+              @if (isFieldInvalid('price')) {
+                <small class="text-red-500">
+                  Fiyat gereklidir.
+                </small>
+              }
+            </div>
+
+            <button 
+              type="submit" 
+              class="w-full bg-green-600 hover:bg-green-700 text-white p-2 rounded-lg mb-4"
+              [disabled]="salesForm.invalid"
+            >
+              Satış Ekle
+            </button>
+
+            <div class="mt-24 ">
+              <label class="block font-medium mb-2">Total Günlük Satış</label>
+              <input 
+                type="text" 
+                [value]="calculateTotal() | currency:'TRY':'symbol-narrow':'1.2-2'"
+                class="w-full p-2 border rounded-lg bg-gray-100" 
+                readonly
+              >
+            </div>
+            <div class="mt-10 ml-48">
+              <p-button severity="help" label="Dışa Aktar" icon="pi pi-upload" (onClick)="dt.exportCSV()" [outlined]="true" />
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Düzenleme Modalı -->
+    @if (showEditModal) {
+      <div class="fixed  inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+          <h3 class="text-lg font-semibold mb-4">Satış Düzenle</h3>
+          <form [formGroup]="editForm" (ngSubmit)="updateSale()">
+            <div class="mb-4">
+              <label class="block font-medium mb-2">Ürün Adı</label>
+              <input 
+                type="text" 
+                formControlName="productName"
+                class="w-full p-2 border rounded-lg"
+              >
+            </div>
+            <div class="mb-4">
+              <label class="block font-medium mb-2">Fiyat</label>
+              <input 
+                type="number" 
+                formControlName="price"
+                class="w-full p-2 border rounded-lg"
+              >
+            </div>
+            <div class="flex space-x-2">
+              <button 
+                type="submit"
+                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg"
+                [disabled]="editForm.invalid"
+              >
+                Güncelle
+              </button>
+              <button 
+                type="button"
+                (click)="closeEditModal()"
+                class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 p-2 rounded-lg"
+              >
+                İptal
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    }
+
+    <!-- Silme Onay Modalı -->
+    @if (showDeleteModal) {
+      <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+          <h3 class="text-lg font-semibold mb-4">Satışı Sil</h3>
+          <p class="mb-4">Bu satışı silmek istediğinizden emin misiniz?</p>
+          <div class="flex space-x-2">
+            <button 
+              (click)="deleteSale()"
+              class="flex-1 bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg"
+            >
+              Sil
+            </button>
+            <button 
+              (click)="closeDeleteModal()"
+              class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 p-2 rounded-lg"
+            >
+              İptal
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+
+    <div class="bg-white rounded-lg shadow-sm h-1/2 p-6 flex flex-col">
+      <h2 class="text-xl font-semibold text-gray-800 mb-4">Son Hareketler</h2>
+      <div class="flex-1 overflow-y-auto">
+        <div class="space-y-3">
+          <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+              <i class="pi pi-shopping-cart text-blue-600"></i>
+            </div>
+            <div class="flex-1">
+              <div class="font-medium">Yeni Stok Girişi</div>
+              <div class="text-sm text-gray-500">10 adet - Elektronik</div>
+            </div>
+            <div class="text-sm text-gray-500">2 dk önce</div>
+          </div>
+
+          <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
+              <i class="pi pi-check text-green-600"></i>
+            </div>
+            <div class="flex-1">
+              <div class="font-medium">Stok Güncellemesi</div>
+              <div class="text-sm text-gray-500">23 ürün güncellendi</div>
+            </div>
+            <div class="text-sm text-gray-500">15 dk önce</div>
+          </div>
+
+          <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+            <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+              <i class="pi pi-exclamation-triangle text-red-600"></i>
+            </div>
+            <div class="flex-1">
+              <div class="font-medium">Kritik Stok Uyarısı</div>
+              <div class="text-sm text-gray-500">5 ürün kritik seviyede</div>
+            </div>
+            <div class="text-sm text-gray-500">1 saat önce</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p-dialog [(visible)]="productDialog" [style]="{ width: '450px' }" header="Ürün Detayları" [modal]="true"
+  styleClass="p-fluid">
+  <ng-template pTemplate="content">
+    <div class="space-y-4">
+      <div class="field">
+        <label for="name" class="font-medium">Ürün Adı</label>
+        <input type="text" pInputText id="name" [(ngModel)]="product.name" required class="w-full p-3" />
+        <small class="p-error">
+          @if ("submitted && !product.name") {
+          Ürün adı gereklidir.
+          }</small>
+      </div>
+
+      <div class="field">
+        <label for="description" class="font-medium">Açıklama</label>
+        <textarea id="description" pInputTextarea [(ngModel)]="product.description" rows="3" class="w-full"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="inventoryStatus" class="font-medium">Stok Durumu</label>
+        <p-dropdown [(ngModel)]="product.inventoryStatus" inputId="inventoryStatus" [options]="statuses" class="w-full">
+          <ng-template pTemplate="selectedItem">
+            <p-tag [value]="product.inventoryStatus?.toUpperCase()" />
+          </ng-template>
+          <ng-template let-option pTemplate="item">
+            <p-tag [value]="option.label" [severity]="getSeverity(option.label)" />
+          </ng-template>
+        </p-dropdown>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="field">
+          <label for="price" class="font-medium">Fiyat</label>
+          <p-inputNumber id="price" [(ngModel)]="product.price" mode="currency" currency="TRY" locale="tr-TR" />
+        </div>
+        <div class="field">
+          <label for="quantity" class="font-medium">Miktar</label>
+          <p-inputNumber id="quantity" [(ngModel)]="product.quantity" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="font-medium mb-3 block">Kategori</label>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="field-radiobutton">
+            <p-radioButton id="category1" name="category" value="Meşrubat" [(ngModel)]="product.category" />
+            <label for="category1" class="ml-2">Meşrubat</label>
+          </div>
+          <div class="field-radiobutton">
+            <p-radioButton id="category2" name="category" value="Gıda" [(ngModel)]="product.category" />
+            <label for="category2" class="ml-2">Gıda</label>
+          </div>
+          <div class="field-radiobutton">
+            <p-radioButton id="category3" name="category" value="Materyal" [(ngModel)]="product.category" />
+            <label for="category3" class="ml-2">Materyal</label>
+          </div>
+          <div class="field-radiobutton">
+            <p-radioButton id="category4" name="category" value="Diğer" [(ngModel)]="product.category" />
+            <label for="category4" class="ml-2">Diğer</label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+
+  <ng-template pTemplate="footer">
+    <div class="flex justify-end space-x-2">
+      <p-button label="İptal" icon="pi pi-times" [outlined]="true" (onClick)="hideDialog()" />
+      <p-button label="Kaydet" icon="pi pi-check" severity="success" (onClick)="saveProduct()" />
+    </div>
+  </ng-template>
+</p-dialog>
+
+<p-confirmDialog [style]="{ width: '450px' }" />

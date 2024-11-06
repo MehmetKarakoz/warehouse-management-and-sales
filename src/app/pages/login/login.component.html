@@ -1,0 +1,22 @@
+<div class="parent">
+<div class="container">
+
+    <div class="login-box">
+        <h1 >𝐋𝐨𝐠𝐢𝐧</h1>
+        <form>
+            <label class=" text-cyan-400">Username</label>
+            <div class="user-box">
+                <input type="text" [(ngModel)]="loginObj.userName" name="name">
+            </div>
+            <label class=" text-cyan-400">Password</label>
+            <div class="user-box">
+                <input type="password" [(ngModel)]="loginObj.password" name="password">
+            </div>
+            <div class="user-box bg-green-500 w-20 text-white ml-28">
+                <p-button   icon="pi pi-iconName"  class="ml-2" (click)="onLogin()" label="Login">
+                </p-button>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
